@@ -45,12 +45,6 @@
         button:hover {
             background-color: #218838;
         }
-        .btn-edit {
-            background-color: #ffc107;
-        }
-        .btn-edit:hover {
-            background-color: #e0a800;
-        }
         .btn-delete {
             background-color: #dc3545;
         }
@@ -73,7 +67,6 @@
             <input type="date" id="fecha" required>
 
             <div id="materialRows">
-                <!-- Aquí se agregarán las filas de materiales -->
                 <div class="materialRow">
                     <label for="material">Nombre del Material:</label>
                     <input type="text" class="material" required>
@@ -90,9 +83,8 @@
             <thead>
                 <tr>
                     <th>Número de Cliente</th>
-                    <th>Material</th>
-                    <th>Cantidad</th>
                     <th>Fecha</th>
+                    <th>Materiales</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -103,11 +95,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const materialesTable = document.getElementById('materialesTable').getElementsByTagName('tbody')[0];
-            let materiales = JSON.parse(localStorage.getItem('materiales')) || [];
-            let editIndex = null;
+            let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
 
             // Cargar materiales existentes
-            materiales.forEach(material => agregarMaterialTabla(material));
+            clientes.forEach(cliente => agregarClienteTabla(cliente));
 
             // Agregar nuevo conjunto de campos para materiales
             document.getElementById('addMaterialButton').addEventListener('click', () => {
@@ -129,16 +120,26 @@
                 const cliente = document.getElementById('cliente').value;
                 const fecha = document.getElementById('fecha').value;
                 const materialInputs = document.querySelectorAll('.materialRow');
+                const materiales = [];
 
                 materialInputs.forEach(row => {
                     const material = row.querySelector('.material').value;
                     const cantidad = row.querySelector('.cantidad').value;
-
-                    const nuevoMaterial = { cliente, material, cantidad, fecha };
-                    materiales.push(nuevoMaterial);
+                    materiales.push({ material, cantidad });
                 });
 
-                localStorage.setItem('materiales', JSON.stringify(materiales));
+                const clienteExistente = clientes.find(c => c.cliente === cliente && c.fecha === fecha);
+                
+                if (clienteExistente) {
+                    // Si el cliente ya existe con la misma fecha, agregamos los nuevos materiales
+                    clienteExistente.materiales = clienteExistente.materiales.concat(materiales);
+                } else {
+                    // Si el cliente no existe, creamos una nueva entrada
+                    const nuevoCliente = { cliente, fecha, materiales };
+                    clientes.push(nuevoCliente);
+                }
+
+                localStorage.setItem('clientes', JSON.stringify(clientes));
                 actualizarTabla();
                 event.target.reset();
                 document.getElementById('materialRows').innerHTML = '<div class="materialRow">...</div>'; // Resetear filas de materiales
@@ -146,32 +147,30 @@
 
             function actualizarTabla() {
                 materialesTable.innerHTML = '';
-                materiales.forEach((material, index) => agregarMaterialTabla(material, index));
+                clientes.forEach((cliente, index) => agregarClienteTabla(cliente, index));
             }
 
-            function agregarMaterialTabla(material, index) {
+            function agregarClienteTabla(cliente, index) {
                 const newRow = materialesTable.insertRow();
-                newRow.insertCell(0).textContent = material.cliente;
-                newRow.insertCell(1).textContent = material.material;
-                newRow.insertCell(2).textContent = material.cantidad;
-                //newRow.insertCell(3).textContent = material.fecha;
+                newRow.insertCell(0).textContent = cliente.cliente;
+                newRow.insertCell(1).textContent = cliente.fecha;
 
-                // Botones de acción
-                const actionsCell = newRow.insertCell(4);
-                actionsCell.appendChild(createButton('Eliminar', 'btn-delete', () => eliminarMaterial(index)));
+                // Mostrar los materiales y cantidades en un formato legible
+                const materialesList = cliente.materiales.map(m => `${m.material} (${m.cantidad})`).join(', ');
+                newRow.insertCell(2).textContent = materialesList;
+
+                // Botón para eliminar
+                const actionsCell = newRow.insertCell(3);
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.classList.add('btn-delete');
+                deleteButton.onclick = () => eliminarCliente(index);
+                actionsCell.appendChild(deleteButton);
             }
 
-            function createButton(text, className, onClick) {
-                const button = document.createElement('button');
-                button.textContent = text;
-                button.classList.add(className);
-                button.onclick = onClick;
-                return button;
-            }
-
-            function eliminarMaterial(index) {
-                materiales.splice(index, 1);
-                localStorage.setItem('materiales', JSON.stringify(materiales));
+            function eliminarCliente(index) {
+                clientes.splice(index, 1);
+                localStorage.setItem('clientes', JSON.stringify(clientes));
                 actualizarTabla();
             }
         });
