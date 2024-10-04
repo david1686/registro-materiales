@@ -69,6 +69,9 @@
             <label for="cliente">Número de Cliente:</label>
             <input type="text" id="cliente" required>
 
+            <label for="fecha">Fecha de Uso:</label>
+            <input type="date" id="fecha" required>
+
             <div id="materialRows">
                 <!-- Aquí se agregarán las filas de materiales -->
                 <div class="materialRow">
@@ -76,8 +79,6 @@
                     <input type="text" class="material" required>
                     <label for="cantidad">Cantidad:</label>
                     <input type="number" class="cantidad" required>
-                    <label for="fecha">Fecha de Uso:</label>
-                    <input type="date" class="fecha" required>
                 </div>
             </div>
 
@@ -118,8 +119,6 @@
                     <input type="text" class="material" required>
                     <label for="cantidad">Cantidad:</label>
                     <input type="number" class="cantidad" required>
-                    <label for="fecha">Fecha de Uso:</label>
-                    <input type="date" class="fecha" required>
                 `;
                 materialRows.appendChild(newRow);
             });
@@ -128,12 +127,12 @@
             document.getElementById('materialForm').addEventListener('submit', event => {
                 event.preventDefault();
                 const cliente = document.getElementById('cliente').value;
+                const fecha = document.getElementById('fecha').value;
                 const materialInputs = document.querySelectorAll('.materialRow');
 
                 materialInputs.forEach(row => {
                     const material = row.querySelector('.material').value;
                     const cantidad = row.querySelector('.cantidad').value;
-                    const fecha = row.querySelector('.fecha').value;
 
                     const nuevoMaterial = { cliente, material, cantidad, fecha };
                     materiales.push(nuevoMaterial);
