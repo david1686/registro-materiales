@@ -58,7 +58,7 @@
             background-color: #c82333;
         }
         .materialRow {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -70,6 +70,7 @@
             <input type="text" id="cliente" required>
 
             <div id="materialRows">
+                <!-- Aquí se agregarán las filas de materiales -->
                 <div class="materialRow">
                     <label for="material">Nombre del Material:</label>
                     <input type="text" class="material" required>
@@ -102,10 +103,79 @@
         document.addEventListener('DOMContentLoaded', () => {
             const materialesTable = document.getElementById('materialesTable').getElementsByTagName('tbody')[0];
             let materiales = JSON.parse(localStorage.getItem('materiales')) || [];
+            let editIndex = null;
 
             // Cargar materiales existentes
             materiales.forEach(material => agregarMaterialTabla(material));
 
+            // Agregar nuevo conjunto de campos para materiales
             document.getElementById('addMaterialButton').addEventListener('click', () => {
                 const materialRows = document.getElementById('materialRows');
-                const newRow = document.createElement('div')
+                const newRow = document.createElement('div');
+                newRow.classList.add('materialRow');
+                newRow.innerHTML = `
+                    <label for="material">Nombre del Material:</label>
+                    <input type="text" class="material" required>
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" class="cantidad" required>
+                    <label for="fecha">Fecha de Uso:</label>
+                    <input type="date" class="fecha" required>
+                `;
+                materialRows.appendChild(newRow);
+            });
+
+            // Guardar materiales
+            document.getElementById('materialForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const cliente = document.getElementById('cliente').value;
+                const materialInputs = document.querySelectorAll('.materialRow');
+
+                materialInputs.forEach(row => {
+                    const material = row.querySelector('.material').value;
+                    const cantidad = row.querySelector('.cantidad').value;
+                    const fecha = row.querySelector('.fecha').value;
+
+                    const nuevoMaterial = { cliente, material, cantidad, fecha };
+                    materiales.push(nuevoMaterial);
+                });
+
+                localStorage.setItem('materiales', JSON.stringify(materiales));
+                actualizarTabla();
+                event.target.reset();
+                document.getElementById('materialRows').innerHTML = '<div class="materialRow">...</div>'; // Resetear filas de materiales
+            });
+
+            function actualizarTabla() {
+                materialesTable.innerHTML = '';
+                materiales.forEach((material, index) => agregarMaterialTabla(material, index));
+            }
+
+            function agregarMaterialTabla(material, index) {
+                const newRow = materialesTable.insertRow();
+                newRow.insertCell(0).textContent = material.cliente;
+                newRow.insertCell(1).textContent = material.material;
+                newRow.insertCell(2).textContent = material.cantidad;
+                newRow.insertCell(3).textContent = material.fecha;
+
+                // Botones de acción
+                const actionsCell = newRow.insertCell(4);
+                actionsCell.appendChild(createButton('Eliminar', 'btn-delete', () => eliminarMaterial(index)));
+            }
+
+            function createButton(text, className, onClick) {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.classList.add(className);
+                button.onclick = onClick;
+                return button;
+            }
+
+            function eliminarMaterial(index) {
+                materiales.splice(index, 1);
+                localStorage.setItem('materiales', JSON.stringify(materiales));
+                actualizarTabla();
+            }
+        });
+    </script>
+</body>
+</html>
