@@ -33,6 +33,7 @@
             width: 100%;
             padding: 8px;
             margin: 5px 0;
+            box-sizing: border-box;
         }
         button {
             padding: 10px 15px;
@@ -62,6 +63,9 @@
     <div class="container">
         <h1>Registro de Materiales Utilizados</h1>
         <form id="materialForm">
+            <label for="cliente">Número de Cliente:</label>
+            <input type="text" id="cliente" required>
+
             <label for="material">Nombre del Material:</label>
             <input type="text" id="material" required>
 
@@ -77,99 +81,88 @@
         <table id="materialesTable">
             <thead>
                 <tr>
+                    <th>Número de Cliente</th>
                     <th>Material</th>
                     <th>Cantidad</th>
                     <th>Fecha</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- Aquí se agregarán los materiales -->
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const storedMaterials = JSON.parse(localStorage.getItem('materiales')) || [];
-            storedMaterials.forEach(material => {
-                agregarMaterialTabla(material);
+        document.addEventListener('DOMContentLoaded', () => {
+            const materialesTable = document.getElementById('materialesTable').getElementsByTagName('tbody')[0];
+            let materiales = JSON.parse(localStorage.getItem('materiales')) || [];
+            let editIndex = null;
+
+            // Cargar materiales existentes
+            materiales.forEach(material => agregarMaterialTabla(material));
+
+            document.getElementById('materialForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const cliente = document.getElementById('cliente').value;
+                const material = document.getElementById('material').value;
+                const cantidad = document.getElementById('cantidad').value;
+                const fecha = document.getElementById('fecha').value;
+
+                const nuevoMaterial = { cliente, material, cantidad, fecha };
+
+                if (editIndex !== null) {
+                    materiales[editIndex] = nuevoMaterial;
+                    editIndex = null;
+                } else {
+                    materiales.push(nuevoMaterial);
+                }
+
+                localStorage.setItem('materiales', JSON.stringify(materiales));
+                actualizarTabla();
+                event.target.reset();
             });
-        });
 
-        const form = document.getElementById('materialForm');
-        const materialesTable = document.getElementById('materialesTable').getElementsByTagName('tbody')[0];
-        let materiales = JSON.parse(localStorage.getItem('materiales')) || [];
-        let editIndex = null;  // Variable para saber si estamos editando un material existente
-
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const material = document.getElementById('material').value;
-            const cantidad = document.getElementById('cantidad').value;
-            const fecha = document.getElementById('fecha').value;
-
-            const nuevoMaterial = { material, cantidad, fecha };
-
-            if (editIndex !== null) {
-                // Si estamos en modo edición, actualizar el material
-                materiales[editIndex] = nuevoMaterial;
-                editIndex = null;
-            } else {
-                // Si es un nuevo material, agregarlo
-                materiales.push(nuevoMaterial);
+            function actualizarTabla() {
+                materialesTable.innerHTML = '';
+                materiales.forEach((material, index) => agregarMaterialTabla(material, index));
             }
 
-            localStorage.setItem('materiales', JSON.stringify(materiales));
-            actualizarTabla();
-            form.reset();
+            function agregarMaterialTabla(material, index) {
+                const newRow = materialesTable.insertRow();
+                newRow.insertCell(0).textContent = material.cliente;
+                newRow.insertCell(1).textContent = material.material;
+                newRow.insertCell(2).textContent = material.cantidad;
+                newRow.insertCell(3).textContent = material.fecha;
+
+                // Botones de acción
+                const actionsCell = newRow.insertCell(4);
+                actionsCell.appendChild(createButton('Editar', 'btn-edit', () => editarMaterial(index)));
+                actionsCell.appendChild(createButton('Eliminar', 'btn-delete', () => eliminarMaterial(index)));
+            }
+
+            function createButton(text, className, onClick) {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.classList.add(className);
+                button.onclick = onClick;
+                return button;
+            }
+
+            function eliminarMaterial(index) {
+                materiales.splice(index, 1);
+                localStorage.setItem('materiales', JSON.stringify(materiales));
+                actualizarTabla();
+            }
+
+            function editarMaterial(index) {
+                const material = materiales[index];
+                document.getElementById('cliente').value = material.cliente;
+                document.getElementById('material').value = material.material;
+                document.getElementById('cantidad').value = material.cantidad;
+                document.getElementById('fecha').value = material.fecha;
+                editIndex = index;
+            }
         });
-
-        function actualizarTabla() {
-            // Vaciar la tabla
-            materialesTable.innerHTML = '';
-            materiales.forEach((material, index) => {
-                agregarMaterialTabla(material, index);
-            });
-        }
-
-        function agregarMaterialTabla(material, index) {
-            const newRow = materialesTable.insertRow();
-            newRow.insertCell(0).textContent = material.material;
-            newRow.insertCell(1).textContent = material.cantidad;
-            newRow.insertCell(2).textContent = material.fecha;
-
-            // Botón para editar
-            const editBtn = document.createElement('button');
-            editBtn.textContent = 'Editar';
-            editBtn.classList.add('btn-edit');
-            editBtn.onclick = function() {
-                editarMaterial(index);
-            };
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Eliminar';
-            deleteBtn.classList.add('btn-delete');
-            deleteBtn.onclick = function() {
-                eliminarMaterial(index);
-            };
-            const actionsCell = newRow.insertCell(3);
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-        }
-
-        function eliminarMaterial(index) {
-            materiales.splice(index, 1);  // Eliminar el material del array
-            localStorage.setItem('materiales', JSON.stringify(materiales));  // Actualizar localStorage
-            actualizarTabla();  // Actualizar la tabla
-        }
-
-        function editarMaterial(index) {
-            const material = materiales[index];
-            document.getElementById('material').value = material.material;
-            document.getElementById('cantidad').value = material.cantidad;
-            document.getElementById('fecha').value = material.fecha;
-            editIndex = index;  // Guardar el índice para saber qué material estamos editando
-        }
     </script>
 </body>
 </html>
